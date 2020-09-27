@@ -10,12 +10,27 @@ visibleMatrix = np.zeros((2, 2))  # 2,2 is arbitrary, used to assign it as a mat
 
 # default variable definition
 size_of_grid = 768
-cell_width = 25
+cell_width = 10
 cells_to_fit = math.floor(size_of_grid / cell_width / 2) * 2
-grid_line_width = 1
+grid_lines = True
 
-matrix_x_position = 15
-matrix_y_position = 15
+matrix_x_position = 500
+matrix_y_position = 500
+
+
+# GUI initialization
+
+sg.theme('DarkAmber')  # background color
+
+layout = [[sg.Graph((size_of_grid, size_of_grid), (0, 0), (size_of_grid, size_of_grid), key='GRAPH',
+                    change_submits=True, drag_submits=False)],
+          [sg.Text('Enter command:'), sg.InputText(key='terminal')],
+          [sg.Button('Okay'), sg.Cancel()]]
+
+window = sg.Window('My new window').Layout(layout)
+graph = window.Element('GRAPH')
+
+event, values = window.Read()
 
 
 # Function Definitions:
@@ -26,25 +41,28 @@ def visible_matrix():
     y = matrix_y_position
     offset = round(cells_to_fit / 2)
     visibleMatrix = mm.current_generation[x - offset:x + offset, y - offset:y + offset]
-    print(visibleMatrix)
+    # print(visibleMatrix)
 
 
 def locate_button_press():
     offset = round(cells_to_fit / 2)
-    effective_grid_size = cells_to_fit * cell_width
     pos_x = mouse[0]
     pos_y = size_of_grid - mouse[1]  # inverted so that 0,0 is on top left (like matrix) instead of bottom left (graph)
-    matrix_x = round((pos_x - cells_to_fit / 2) / effective_grid_size * cells_to_fit)  # rounds to nearest cell number
-    matrix_y = round((pos_y - cells_to_fit / 2) / effective_grid_size * cells_to_fit)  # rounds to nearest cell number
+    matrix_x = round((pos_x / cell_width) - 1/2)  # rounds to nearest cell number
+    matrix_y = round((pos_y / cell_width) - 1/2)  # rounds to nearest cell number
     mm.current_generation[matrix_x - offset + matrix_x_position, matrix_y - offset + matrix_y_position] = \
-            (not mm.current_generation[matrix_x, matrix_y]) * 1
+            (not mm.current_generation[matrix_x -offset +matrix_x_position, matrix_y - offset + matrix_y_position]) * 1
                                                 # flips the nearest
-    print(matrix_y)
+    # print(pos_x)
+    # print(pos_y)
+    # print(matrix_x)
+    # print(matrix_y)
+
 
 def draw_matrix():
     visible_matrix()
     live_cells = np.where(visibleMatrix == 1)
-    print(live_cells)
+    # print(live_cells)
     for i in range(len(live_cells[0])):
         x = live_cells[0][i]
         y = live_cells[1][i]
@@ -55,35 +73,50 @@ def draw_matrix():
 
 
 def draw_grid():
-    for i in range(cells_to_fit):
-        x = i
-        for p in range(cells_to_fit):
-            y = p
+    if grid_lines:
+        effective_grid_size = cells_to_fit * cell_width
+        for i in range(cells_to_fit):
+            graph.draw_line((i * cell_width, size_of_grid), (i * cell_width, size_of_grid - effective_grid_size))
+        for i in range(cells_to_fit):
+            graph.draw_line((0,size_of_grid - i * cell_width), (effective_grid_size,size_of_grid - i*cell_width))
 
-            top_left = ((x * cell_width), size_of_grid - (y * cell_width))
-            bot_right = ((x * cell_width + cell_width), size_of_grid - (y * cell_width + cell_width))
-            graph.DrawRectangle(top_left, bot_right, line_color='black')
 
+def update_graph():
+    graph.erase()
+    draw_matrix()
+    draw_grid()
 
 def print_GUI_info():
     print('cell width: ' + str(cell_width))
     print('cells_to_fit: ' + str(cells_to_fit))
-    print('grid_line_width: ' + str(grid_line_width))
+    print('grid_lines_status: ' + str(grid_lines))
+
+
+def process_terminal():
+    # print(mm.gen_saver)
+    global grid_lines
+    global cell_width
+    global cells_to_fit
+    if values['terminal'] == 'next':
+        mm.next_generation()
+        graph.erase()
+        draw_matrix()
+        draw_grid()
+    if values['terminal'] == 'size up':
+        cell_width += 1
+        cells_to_fit = math.floor(size_of_grid / cell_width / 2) * 2
+    if values['terminal'] == 'grid':
+        grid_lines = not grid_lines
+    if values['terminal'] == 'previous':
+        if len(mm.gen_saver) != 0:
+            mm.current_generation = mm.gen_saver[-1]
+            mm.gen_saver.pop(-1)
+    print('processed')
+
 
 
 print_GUI_info()
 
-sg.theme('DarkAmber')  # background color
-
-layout = [[sg.Graph((size_of_grid, size_of_grid), (0, 0), (size_of_grid, size_of_grid), key='GRAPH',
-                    change_submits=True, drag_submits=False)],
-          [sg.Text('Enter command:'), sg.InputText()],
-          [sg.OK(), sg.Cancel()]]
-
-window = sg.Window('My new window').Layout(layout)
-graph = window.Element('GRAPH')
-
-event, values = window.Read()
 
 while True:  # Event Loop
     event, values = window.Read()
@@ -92,17 +125,11 @@ while True:  # Event Loop
     if event in (sg.WIN_CLOSED, 'Exit'):
         break
 
-    graph.erase()
-    draw_matrix()
-    draw_grid()
-    mm.next_generation()
-
     mouse = values['GRAPH']
-
     if event == 'GRAPH':
         if mouse == (None, None):
             continue
         locate_button_press()
-        graph.erase()
-        draw_matrix()
-        draw_grid()
+    if event == 'Okay':
+        process_terminal()
+    update_graph()
