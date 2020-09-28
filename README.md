@@ -1,10 +1,10 @@
-## Code used for Math IA on Conway's Game of Life and other cellular autonoma_
+# Code used for Math IA on Conway's Game of Life and other cellular autonoma_
 
-# Current Features:
+## Current Features:
 
 
 
-# Controls:
+## Controls:
 
 **click** on a cell to convert it from on to off or off to on
 
