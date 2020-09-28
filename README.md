@@ -10,7 +10,7 @@
 
 **up, down, left, right arrows** used to pan the window
 
-the key « **'** » (apostrophe) is used to go forward a generation
+the key « **'** » (apostrophe) is used to go forward a generation         
 the key « **;** » (semicolon) is used to go back a generation
 
 the unshifted **<** key (comma) zooms out
