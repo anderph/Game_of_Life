@@ -22,7 +22,7 @@ matrix_y_position = 500
 
 # GUI initialization
 
-sg.theme('DarkAmber')  # background color
+# sg.theme('DarkAmber')  # background color
 
 layout = [[sg.Graph((size_of_grid, size_of_grid), (0, 0), (size_of_grid, size_of_grid), key='GRAPH',
                     change_submits=True, drag_submits=False)],
