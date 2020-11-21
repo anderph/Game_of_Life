@@ -16,13 +16,14 @@ size_of_grid = 768
 cell_width = 10
 cells_to_fit = math.floor(size_of_grid / cell_width / 2) * 2
 grid_lines = True
+run_once = True
 
 matrix_x_position = 500
 matrix_y_position = 500
 
 # GUI initialization
 
-sg.theme('DarkAmber')  # background color
+sg.theme('White')  # background color
 
 layout = [[sg.Graph((size_of_grid, size_of_grid), (0, 0), (size_of_grid, size_of_grid), key='GRAPH',
                     change_submits=True, drag_submits=False)],
@@ -163,6 +164,8 @@ def process_terminal():
 
 
 print_GUI_info()
+
+
 
 while True:  # Event Loop
     event, values = window.Read()
