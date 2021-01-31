@@ -8,7 +8,6 @@ import math
 
 
 
-
 visibleMatrix = np.zeros((2, 2))  # 2,2 is arbitrary, used to assign it as a matrix type
 
 # default variable definition
@@ -23,7 +22,7 @@ matrix_y_position = 500
 
 # GUI initialization
 
-sg.theme('White')  # background color
+sg.theme('LightGreen2')  # background color
 
 layout = [[sg.Graph((size_of_grid, size_of_grid), (0, 0), (size_of_grid, size_of_grid), key='GRAPH',
                     change_submits=True, drag_submits=False)],
@@ -158,6 +157,8 @@ def process_terminal():
             mm.gen_saver.pop(-1)
     elif values['terminal'] == 'diag':
         print_GUI_info()
+    elif values['terminal'] == 'clear':
+        mm.current_generation = np.zeros((mm.matrix_size, mm.matrix_size))
     else:
         navigate(values['terminal'])
     print('processed')
