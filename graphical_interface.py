@@ -17,8 +17,8 @@ cells_to_fit = math.floor(size_of_grid / cell_width / 2) * 2
 grid_lines = True
 run_once = True
 
-matrix_x_position = 500
-matrix_y_position = 500
+matrix_x_position = round(mm.matrix_size/2)
+matrix_y_position = round(mm.matrix_size/2)
 
 # GUI initialization
 
@@ -133,7 +133,7 @@ def keypress_check():
             mm.current_generation = mm.gen_saver[-1]
             mm.gen_saver.pop(-1)
     if '\'' in event:
-        mm.next_generation()
+        mm.current_generation = mm.next_generation(mm.current_generation)
 
 
 def process_terminal():
@@ -142,7 +142,7 @@ def process_terminal():
     global cell_width
     global cells_to_fit
     if values['terminal'] == 'next':
-        mm.next_generation()
+        mm.current_generation = mm.next_generation(mm.current_generation)
         graph.erase()
         draw_matrix()
         draw_grid()
