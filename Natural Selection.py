@@ -3,15 +3,15 @@ import numpy as np
 import PySimpleGUI as sg
 import matrixManipulation as mm
 import random
-
+import time
 
 # variable setup
 
 initialChanceOfLife = .3
-chanceOfDeath = 0.1
-chanceOfBirth = 0.03
-gensPerGeneration = 5
-generationLength = 50
+chanceOfDeath = 0.015
+chanceOfBirth = 0.005
+gensPerGeneration = 15
+generationLength = 70
 outerBoundaryCheck = 100 # how far away from the origin the win conditions will be checked
 randomStartBoundary = 30  # this amount in all directions from origin
 winConditionBoundary = randomStartBoundary + 10
@@ -20,8 +20,9 @@ originy = round(mm.matrix_size/2)
 winningGeneration = np.zeros((mm.matrix_size, mm.matrix_size))  # blank matrix
 listOfGensToCompete = np.zeros((gensPerGeneration,mm.matrix_size,mm.matrix_size))
 listOfGensToPlay = np.zeros((gensPerGeneration,mm.matrix_size,mm.matrix_size))
-global displayedGeneration
 displayedGeneration = winningGeneration
+evolutionCount = 0
+evoCounter = 0 # this is for repeatedly evolving from the terminal
 
 displayedMatrixCountCalculated = 0
 
@@ -51,6 +52,7 @@ def randomInitialMatrixCreation():
 
 def iterateMatrix():
     global listOfGensToCompete
+    listOfGensToCompete = np.zeros((gensPerGeneration, mm.matrix_size, mm.matrix_size))
     listOfGensToCompete[0] = winningGeneration
     for numberOfMatrices in range(gensPerGeneration-1):
         tempMatrix = winningGeneration
@@ -85,13 +87,13 @@ def gameOfLifeTheMatrix():
 
 def winCondition1(matrix):
     tempgen1 = matrix[(originx - outerBoundaryCheck):(originx + outerBoundaryCheck), (originy - outerBoundaryCheck):(originy + outerBoundaryCheck)]
-    total = len(np.where(tempgen1 == 1)[0])
+    total = np.count_nonzero(tempgen1)
     tempgen2 = matrix[(originx - winConditionBoundary):(originx + winConditionBoundary), (originy - winConditionBoundary):(originy + winConditionBoundary)]
-    innerWinBoundary = len(np.where(tempgen2 == 1)[0])
+    innerWinBoundary = np.count_nonzero(tempgen2)
     outsideWinBoundary = total-innerWinBoundary
-    print(total)
-    print(innerWinBoundary)
-    print(outsideWinBoundary)
+    # print(total)
+    # print(innerWinBoundary)
+    # print(outsideWinBoundary)
     return outsideWinBoundary
 
 def winCondition2(matrix):
@@ -106,7 +108,6 @@ def winCondition4(matrix):
     print()
 
 
-
 def cullTheMatrix():
     winStates = []
     for gen in listOfGensToPlay:
@@ -118,16 +119,34 @@ def cullTheMatrix():
     return winStates.index(max(winStates))
 
 
-randomInitialMatrixCreation()  ## Important this is where the initial matrix function is called
-iterateMatrix()
-gameOfLifeTheMatrix()
-print(cullTheMatrix())
-# print(listOfGensToCompete)
-# print(listOfGensToPlay)
-# if listOfGensToPlay == listOfGensToCompete:
-#     print('yes')
+def update_text():
+    window['output'].update(str( "current matrix # = " + str((displayedMatrixCountCalculated % gensPerGeneration)) +
+                                 ' winCondition = ' + str(
+        winCondition1(listOfGensToPlay[displayedMatrixCountCalculated % gensPerGeneration])) +
+                                " and top performer = " + str(cullTheMatrix()) + ", current evolution = " + str(evolutionCount)))
+    window['top out'].update("EvoCounterStack = " + str(evoCounter))
+
+def initialStart():
+    global winningGeneration ## Important this is where the initial matrix function is called
+    for i in range(gensPerGeneration):
+        randomInitialMatrixCreation()
+        listOfGensToCompete[i] = winningGeneration
+        winningGeneration = np.zeros((mm.matrix_size, mm.matrix_size))
+    gameOfLifeTheMatrix()
+    print(cullTheMatrix())
+    winningGeneration = listOfGensToCompete[cullTheMatrix()]
+
+initialStart()
 
 
+def evolution():
+    global evolutionCount
+    global winningGeneration
+    evolutionCount += 1
+    iterateMatrix()
+    gameOfLifeTheMatrix()
+    winningGeneration = listOfGensToCompete[cullTheMatrix()]
+    update_text()
 
 
 
@@ -138,8 +157,8 @@ sg.theme('LightGreen2')  # background color
 
 layout = [[sg.Graph((size_of_grid, size_of_grid), (0, 0), (size_of_grid, size_of_grid), key='GRAPH',
                     change_submits=True, drag_submits=False)],
-          [sg.Text('Enter command:'), sg.InputText(key='terminal')],
-          [sg.Button('Okay'), sg.Cancel(), sg.Text((" " * 100), key= 'output')]]
+          [sg.Text('Enter command:'), sg.InputText(key='terminal'), sg.Text((" " * 100), key= 'top out')],
+          [sg.Button('Okay'), sg.Cancel(), sg.Text((" " * 170), key= 'output')]]
 
 window = sg.Window('My new window', return_keyboard_events=True, use_default_focus=False).Layout(layout)
 graph = window.Element('GRAPH')
@@ -234,6 +253,7 @@ def process_terminal():
     global cells_to_fit
     global displayedGeneration
     global displayedMatrixCountCalculated
+    global evoCounter
     if values['terminal'] == 'size up':
         cell_width += 1
         cells_to_fit = math.floor(size_of_grid / cell_width / 2) * 2
@@ -245,9 +265,7 @@ def process_terminal():
     elif values['terminal'] == 'nextCalculated':
         displayedMatrixCountCalculated += 1
         displayedGeneration = listOfGensToCompete[(displayedMatrixCountCalculated % gensPerGeneration)]
-        window['output'].update(str('winCondition = '
-                    + str(winCondition1(listOfGensToPlay[displayedMatrixCountCalculated % gensPerGeneration])) +
-                                    " and top performer = " + str(cullTheMatrix())))
+        update_text()
         # print(listOfGensToCompete)
         # print(winningGeneration)
         # print(len(listOfGensToCompete))
@@ -256,10 +274,30 @@ def process_terminal():
         # print(displayedMatrixCountCalculated % gensPerGeneration)
         # print(listOfGensToCompete[(displayedMatrixCountCalculated % gensPerGeneration)][170:230,170:230])
         update_graph()
+    elif values['terminal'] == 'nextPlayed':
+        displayedMatrixCountCalculated += 1
+        displayedGeneration = listOfGensToPlay[(displayedMatrixCountCalculated % gensPerGeneration)]
+        update_text()
+    elif values['terminal'] == 'original':
+        displayedGeneration = listOfGensToCompete[(displayedMatrixCountCalculated % gensPerGeneration)]
     elif values['terminal'] == 'win1':
         winCondition1(listOfGensToPlay[displayedMatrixCountCalculated % gensPerGeneration])
     elif values['terminal'] == 'play':
         displayedGeneration = listOfGensToPlay[(displayedMatrixCountCalculated % gensPerGeneration)]
+    elif values['terminal'] == 'evolve':
+        evolution()
+    elif values['terminal'] == 'game':
+        displayedGeneration = mm.next_generation(displayedGeneration)
+    elif values['terminal'] == 'evoCount':
+        evoCounter += 1
+        update_text()
+    elif values['terminal'] == 'evoBig':
+        for i in range(evoCounter):
+            timeSinceGeneration = time.time()
+            evolution()
+            print("evolved from evoBig on evo: " + str(evolutionCount) + ", evo took " +
+                                str((time.time() - timeSinceGeneration)) + " seconds")
+        evoCounter = 0
     elif values['terminal'] == 'diag':
         print_GUI_info()
     else:
@@ -268,6 +306,7 @@ def process_terminal():
 
 
 print_GUI_info()
+update_text()
 
 while True:  # Event Loop
     event, values = window.Read()
