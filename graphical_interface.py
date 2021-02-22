@@ -16,6 +16,7 @@ cell_width = 10
 cells_to_fit = math.floor(size_of_grid / cell_width / 2) * 2
 grid_lines = True
 run_once = True
+cellColour = "red"
 
 matrix_x_position = round(mm.matrix_size/2)
 matrix_y_position = round(mm.matrix_size/2)
@@ -72,7 +73,7 @@ def draw_matrix():
 
         top_left = ((x * cell_width), size_of_grid - (y * cell_width))
         bot_right = ((x * cell_width + cell_width), size_of_grid - (y * cell_width + cell_width))
-        graph.DrawRectangle(top_left, bot_right, fill_color='red', line_color='red')
+        graph.DrawRectangle(top_left, bot_right, fill_color=cellColour, line_color='red')
 
 
 def draw_grid():
@@ -141,6 +142,7 @@ def process_terminal():
     global grid_lines
     global cell_width
     global cells_to_fit
+    global cellColour
     if values['terminal'] == 'next':
         mm.current_generation = mm.next_generation(mm.current_generation)
         graph.erase()
@@ -159,6 +161,12 @@ def process_terminal():
         print_GUI_info()
     elif values['terminal'] == 'clear':
         mm.current_generation = np.zeros((mm.matrix_size, mm.matrix_size))
+    elif values['terminal'] == 'red':
+        cellColour = "red"
+    elif values['terminal'] == 'blue':
+        cellColour = "blue"
+    elif values['terminal'] == 'green':
+        cellColour = "green"
     else:
         navigate(values['terminal'])
     print('processed')
