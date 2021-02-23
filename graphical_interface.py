@@ -8,7 +8,6 @@ import math
 
 
 
-
 visibleMatrix = np.zeros((2, 2))  # 2,2 is arbitrary, used to assign it as a matrix type
 
 # default variable definition
@@ -17,13 +16,14 @@ cell_width = 10
 cells_to_fit = math.floor(size_of_grid / cell_width / 2) * 2
 grid_lines = True
 run_once = True
+cellColour = "red"
 
-matrix_x_position = 500
-matrix_y_position = 500
+matrix_x_position = round(mm.matrix_size/2)
+matrix_y_position = round(mm.matrix_size/2)
 
 # GUI initialization
 
-sg.theme('White')  # background color
+sg.theme('LightGreen2')  # background color
 
 layout = [[sg.Graph((size_of_grid, size_of_grid), (0, 0), (size_of_grid, size_of_grid), key='GRAPH',
                     change_submits=True, drag_submits=False)],
@@ -73,7 +73,7 @@ def draw_matrix():
 
         top_left = ((x * cell_width), size_of_grid - (y * cell_width))
         bot_right = ((x * cell_width + cell_width), size_of_grid - (y * cell_width + cell_width))
-        graph.DrawRectangle(top_left, bot_right, fill_color='red', line_color='red')
+        graph.DrawRectangle(top_left, bot_right, fill_color=cellColour, line_color='red')
 
 
 def draw_grid():
@@ -134,7 +134,7 @@ def keypress_check():
             mm.current_generation = mm.gen_saver[-1]
             mm.gen_saver.pop(-1)
     if '\'' in event:
-        mm.next_generation()
+        mm.current_generation = mm.next_generation(mm.current_generation)
 
 
 def process_terminal():
@@ -142,8 +142,9 @@ def process_terminal():
     global grid_lines
     global cell_width
     global cells_to_fit
+    global cellColour
     if values['terminal'] == 'next':
-        mm.next_generation()
+        mm.current_generation = mm.next_generation(mm.current_generation)
         graph.erase()
         draw_matrix()
         draw_grid()
@@ -158,6 +159,14 @@ def process_terminal():
             mm.gen_saver.pop(-1)
     elif values['terminal'] == 'diag':
         print_GUI_info()
+    elif values['terminal'] == 'clear':
+        mm.current_generation = np.zeros((mm.matrix_size, mm.matrix_size))
+    elif values['terminal'] == 'red':
+        cellColour = "red"
+    elif values['terminal'] == 'blue':
+        cellColour = "blue"
+    elif values['terminal'] == 'green':
+        cellColour = "green"
     else:
         navigate(values['terminal'])
     print('processed')
